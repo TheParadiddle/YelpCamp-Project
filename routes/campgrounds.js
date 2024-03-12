@@ -3,6 +3,7 @@ const router = express.Router();
 
 const wrapAsync = require('../utilities/wrapAsync');
 const { campgroundSchema } = require('../schemas');
+const { isLoggedIn } = require('../middleware');
 
 const ExpressError = require('../utilities/ExpressError');
 const Campground = require('../models/campground');
@@ -22,11 +23,11 @@ router.get('/', wrapAsync(async (req, res) => {
     res.render('campgrounds/index', { campgrounds })
 }))
 
-router.get('/new', (req, res) => {
+router.get('/new', isLoggedIn, (req, res) => {
     res.render('campgrounds/new');
 })
 
-router.post('/', validateCampground, wrapAsync(async (req, res) => {
+router.post('/', isLoggedIn, validateCampground, wrapAsync(async (req, res) => {
     const campground = new Campground(req.body.campground);
     await campground.save();
     req.flash('success', 'Successfully made a new campground!')
@@ -42,7 +43,7 @@ router.get('/:id', wrapAsync(async (req, res) => {
     res.render('campgrounds/show', { campground })
 }))
 
-router.get('/:id/edit', wrapAsync(async (req, res) => {
+router.get('/:id/edit', isLoggedIn, wrapAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id);
     if(!campground) {
         req.flash('error', 'Cannot find that campground!')
@@ -51,14 +52,14 @@ router.get('/:id/edit', wrapAsync(async (req, res) => {
     res.render('campgrounds/edit', { campground })
 }))
 
-router.put('/:id', validateCampground, wrapAsync(async (req, res) => {
+router.put('/:id', isLoggedIn, validateCampground, wrapAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground });
     req.flash('success', 'Successfully updated campground!')
     res.redirect(`/campgrounds/${campground._id}`);
 }))
 
-router.delete('/:id', wrapAsync(async (req, res) => {
+router.delete('/:id', isLoggedIn, wrapAsync(async (req, res) => {
     const { id } = req.params;
     await Campground.findByIdAndDelete(id);
     req.flash('success', 'Successfully deleted campground')
