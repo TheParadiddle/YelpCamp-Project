@@ -14,14 +14,17 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 const helmet = require('helmet');
-
+const MongoStore = require('connect-mongo');
 const mongoSanitize = require('express-mongo-sanitize');
 
 const userRoutes = require('./routes/users');
 const campgroundRoutes = require('./routes/campgrounds');
 const reviewRoutes = require('./routes/reviews');
 
-mongoose.connect('mongodb://127.0.0.1:27017/yelp_camp');
+// const dbUrl = process.env.DB_URL;
+const dbUrl = 'mongodb://127.0.0.1:27017/yelp_camp';
+
+mongoose.connect(dbUrl);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -42,7 +45,20 @@ app.use(mongoSanitize({
     replaceWith: '_'
 }));
 
+const store = MongoStore.create({
+    mongoUrl: dbUrl,
+    touchAfter: 24 * 60 * 60,
+    crypto: {
+        secret: 'thisshouldbeabettersecret!'
+    }
+});
+
+store.on('error', function (e) {
+    console.log('session store error', e)
+})
+
 const sessionConfig = {
+    store,
     name: 'session',
     secret: 'thisshouldbeabettersecret!',
     resave: false,
@@ -97,7 +113,7 @@ app.use(
                     "'self'",
                     "blob:",
                     "data:",
-                    "https://res.cloudinary.com/divflkwsl/", 
+                    "https://res.cloudinary.com/divflkwsl/",
                     "https://images.unsplash.com/",
                 ],
                 fontSrc: ["'self'", ...fontSrcUrls],
