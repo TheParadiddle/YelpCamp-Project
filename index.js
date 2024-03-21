@@ -21,8 +21,7 @@ const userRoutes = require('./routes/users');
 const campgroundRoutes = require('./routes/campgrounds');
 const reviewRoutes = require('./routes/reviews');
 
-// const dbUrl = process.env.DB_URL;
-const dbUrl = 'mongodb://127.0.0.1:27017/yelp_camp';
+const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/yelp_camp';
 
 mongoose.connect(dbUrl);
 
@@ -45,11 +44,13 @@ app.use(mongoSanitize({
     replaceWith: '_'
 }));
 
+const secret = process.env.SECRET || 'thisshouldbeabettersecret!';
+
 const store = MongoStore.create({
     mongoUrl: dbUrl,
     touchAfter: 24 * 60 * 60,
     crypto: {
-        secret: 'thisshouldbeabettersecret!'
+        secret
     }
 });
 
@@ -60,19 +61,19 @@ store.on('error', function (e) {
 const sessionConfig = {
     store,
     name: 'session',
-    secret: 'thisshouldbeabettersecret!',
+    secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        // secure: true,
+        secure: true,
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
 }
 app.use(session(sessionConfig))
 app.use(flash());
-// app.use(helmet());
+
 "https://res.cloudinary.com/divflkwsl/"
 
 const scriptSrcUrls = [
